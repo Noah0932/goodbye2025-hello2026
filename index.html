@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 喜迎元旦 | 跨年倒计时</title>
+    <title>2026 喜迎元旦 | 许愿墙 (完整版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- 视觉样式 --- */
+        /* --- 视觉样式 (保持不变) --- */
         body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
         .font-festive { font-family: "Kaiti SC", "STKaiti", "KaiTi", serif; }
         .tabular-nums { font-variant-numeric: tabular-nums; }
@@ -50,13 +50,13 @@
         <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#fbbf24 1px, transparent 1px); background-size: 20px 20px;"></div>
         <div class="container mx-auto px-4 text-center relative z-10 cursor-pointer" onclick="window.fireConfetti()">
             <div class="inline-block bg-red-800 text-amber-300 text-xs px-3 py-1 rounded-full mb-3 border border-amber-500 uppercase tracking-wider">
-                Full Stack: Worker + KV
+                Feature: Time & Location
             </div>
             <h1 class="text-4xl md:text-5xl font-bold text-white tracking-wide font-festive drop-shadow-md">
                 喜迎 <span class="text-amber-300 text-5xl md:text-6xl">2026</span> 元旦
             </h1>
             <p class="mt-3 text-red-100 text-sm md:text-base font-light">
-                万象更新 · 砥砺前行 · <span class="border-b border-red-400 pb-0.5">点击此处燃放烟花</span> ✨
+                记录此刻 · 奔赴未来 · <span class="border-b border-red-400 pb-0.5">点击放烟花</span> ✨
             </p>
         </div>
     </header>
@@ -100,7 +100,7 @@
                 <div class="mb-4 pl-2 border-l-4 border-amber-500 relative z-10 flex justify-between items-start">
                     <div>
                         <h3 class="text-lg font-bold text-stone-800">2026 云端愿望单</h3>
-                        <p class="text-sm text-stone-500 mt-1">写下你的新年愿望，让它们在 2026 开花结果</p>
+                        <p class="text-sm text-stone-500 mt-1">美好愿望已锁定 · 永久珍藏</p>
                     </div>
                     <div id="connection-status" class="flex items-center text-xs text-stone-400 bg-stone-100 px-2 py-1 rounded-md">
                         <span class="spinner mr-1"></span> 连接后端...
@@ -118,7 +118,7 @@
     </main>
 
     <footer class="w-full bg-stone-100 border-t border-red-100 py-8 mt-8 text-center text-sm text-stone-500">
-        <p>&copy; 2025-2026 跨年倒计时 | 架构：Frontend + Cloudflare Worker</p>
+        <p>&copy; 2025-2026 跨年倒计时 | 架构：Frontend + Worker</p>
         <p class="text-xs text-stone-400 mt-1"><a href="https://beian.miit.gov.cn/" target="_blank">皖ICP备2025092209号</a></p>
     </footer>
 
@@ -128,35 +128,30 @@
         // 1. 配置区域 (CONFIGURATION)
         // ========================================================
         
-        // 【重要】：部署 Worker 后，请将这里的 false 改为 false，并填入 URL
-        // 示例: "https://my-wish-worker.username.workers.dev/api/wishes"
+        // 部署 Worker 后，请填入 URL，并将 IS_MOCK_MODE 改为 false
         const WORKER_API_URL = "https://2026.niuma.edu.kg/api/wishes"; 
         
-        // 预览模式开关：为保证您现在能看到效果，默认开启模拟数据（因为还没部署 Worker）
-        // 如果您填入了上面的 URL，请将下面设为 false
+        // 预览模式开关
         const IS_MOCK_MODE = false; 
 
         // ========================================================
         // 2. API 服务层 (SERVICE LAYER)
-        // 负责与 Cloudflare Worker 通信
         // ========================================================
         class WishService {
             constructor(apiUrl, isMock) {
                 this.apiUrl = apiUrl;
                 this.isMock = isMock;
-                // Mock data store
                 if(isMock) {
-                    console.log("⚠️ 运行在模拟模式 (Mock Mode). 数据存储在 LocalStorage.");
+                    console.log("⚠️ 运行在模拟模式 (Mock Mode).");
                     this.mockStore = JSON.parse(localStorage.getItem('mock_wishes') || '[]');
                 }
             }
 
             async getAll() {
                 if (this.isMock) {
-                    await new Promise(r => setTimeout(r, 800)); // Simulate network lag
+                    await new Promise(r => setTimeout(r, 800)); 
                     return this.mockStore;
                 }
-                
                 try {
                     const res = await fetch(this.apiUrl);
                     if (!res.ok) throw new Error("API Error");
@@ -170,12 +165,20 @@
             async add(text) {
                 if (this.isMock) {
                     await new Promise(r => setTimeout(r, 500));
-                    const newWish = { id: Date.now().toString(), text, timestamp: Date.now() };
+                    // 模拟数据
+                    const locs = ["浙江温州 电信", "北京 联通", "广东深圳 移动", "上海 电信", "四川成都", "湖北武汉"];
+                    const randomLoc = locs[Math.floor(Math.random() * locs.length)];
+                    
+                    const newWish = { 
+                        id: Date.now().toString(), 
+                        text, 
+                        location: randomLoc, 
+                        timestamp: Date.now() 
+                    };
                     this.mockStore.unshift(newWish);
                     localStorage.setItem('mock_wishes', JSON.stringify(this.mockStore));
                     return newWish;
                 }
-
                 try {
                     const res = await fetch(this.apiUrl, {
                         method: 'POST',
@@ -186,26 +189,6 @@
                     return await res.json();
                 } catch (e) {
                     console.error("Add failed", e);
-                    throw e;
-                }
-            }
-
-            async delete(id) {
-                if (this.isMock) {
-                    this.mockStore = this.mockStore.filter(w => w.id !== id);
-                    localStorage.setItem('mock_wishes', JSON.stringify(this.mockStore));
-                    return true;
-                }
-
-                try {
-                    const res = await fetch(this.apiUrl, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id })
-                    });
-                    return res.ok;
-                } catch (e) {
-                    console.error("Delete failed", e);
                     throw e;
                 }
             }
@@ -261,7 +244,7 @@
                 options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true } } } }
             });
 
-            // --- Wish Logic (Backend Integration) ---
+            // --- Wish Logic (With Timestamp) ---
             const renderList = (wishes) => {
                 els.list.innerHTML = '';
                 if (wishes.length === 0) {
@@ -272,10 +255,31 @@
                 ul.className = "space-y-3";
                 wishes.forEach(w => {
                     const li = document.createElement('li');
-                    li.className = 'flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border-l-4 border-red-400 animate-[fadeIn_0.3s_ease-out]';
+                    li.className = 'flex flex-col bg-white p-3 rounded-lg shadow-sm border-l-4 border-red-400 animate-[fadeIn_0.3s_ease-out]';
+                    
+                    // 格式化时间
+                    let timeStr = "";
+                    if (w.timestamp) {
+                        const date = new Date(w.timestamp);
+                        // 格式: 12/31 14:30
+                        timeStr = date.toLocaleString('zh-CN', {
+                            month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+                        });
+                    }
+
                     li.innerHTML = `
-                        <div class="flex items-center"><span class="text-amber-500 mr-2">✨</span><span class="text-stone-700 font-medium break-all">${w.text}</span></div>
-                        <button class="delete-btn text-stone-300 hover:text-red-500 px-2" data-id="${w.id}">&times;</button>
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center text-stone-700 font-medium break-all w-full">
+                                <span class="text-amber-500 mr-2 flex-shrink-0">✨</span>
+                                ${w.text}
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-stone-400 mt-1">
+                            <span>🕒 ${timeStr}</span>
+                            <span class="bg-stone-50 px-2 py-0.5 rounded-full flex items-center border border-stone-100">
+                                📍 ${w.location || '未知归属地'}
+                            </span>
+                        </div>
                     `;
                     ul.appendChild(li);
                 });
@@ -302,7 +306,7 @@
                 const val = els.input.value.trim();
                 if(!val) return;
                 els.input.value = '';
-                els.input.disabled = true; // prevent double submit
+                els.input.disabled = true; 
                 await api.add(val);
                 window.fireConfetti();
                 els.input.disabled = false;
