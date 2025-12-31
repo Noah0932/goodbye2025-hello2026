@@ -280,16 +280,6 @@
                     ul.appendChild(li);
                 });
                 els.list.appendChild(ul);
-
-                // Bind delete
-                document.querySelectorAll('.delete-btn').forEach(b => {
-                    b.addEventListener('click', async (e) => {
-                        const id = e.target.getAttribute('data-id');
-                        e.target.innerText = "...";
-                        await api.delete(id);
-                        loadWishes();
-                    });
-                });
             };
 
             const loadWishes = async () => {
