@@ -7,143 +7,50 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- 核心布局与图表容器 --- */
-        .chart-container {
-            position: relative;
-            width: 100%;
-            max-width: 450px;
-            margin: 0 auto;
-            height: 300px;
-            max-height: 350px;
+        /* --- 视觉样式 --- */
+        body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
+        .font-festive { font-family: "Kaiti SC", "STKaiti", "KaiTi", serif; }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+        .chart-container { position: relative; width: 100%; max-width: 450px; margin: 0 auto; height: 300px; max-height: 350px; }
+        
+        /* Loading Spinner */
+        .spinner {
+            border: 2px solid rgba(220, 38, 38, 0.1); border-left-color: #dc2626;
+            border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block;
         }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* --- 节日字体优化 --- */
-        body {
-            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-        }
-        .font-festive {
-            font-family: "Kaiti SC", "STKaiti", "KaiTi", serif; /* 楷体更具传统韵味 */
-        }
-        .tabular-nums {
-            font-variant-numeric: tabular-nums;
-        }
-
-        /* --- CSS 灯笼动画 (Lanterns) --- */
-        @keyframes swing {
-            0% { transform: rotate(-5deg); }
-            50% { transform: rotate(5deg); }
-            100% { transform: rotate(-5deg); }
-        }
-        .lantern-container {
-            position: absolute;
-            top: -10px;
-            z-index: 10;
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            pointer-events: none;
-            overflow: hidden;
-            padding: 0 20px;
-        }
-        .lantern {
-            width: 60px;
-            height: 50px;
-            background: #dc2626; /* red-600 */
-            border-radius: 15px;
-            position: relative;
-            animation: swing 4s infinite ease-in-out;
-            box-shadow: 0 5px 15px rgba(220, 38, 38, 0.4);
-        }
-        .lantern::before, .lantern::after {
-            content: '';
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 30px;
-            height: 6px;
-            background: #fcd34d; /* amber-300 */
-            border-radius: 2px;
-        }
-        .lantern::before { top: -4px; }
-        .lantern::after { bottom: -4px; }
-        .lantern-string {
-            width: 2px;
-            height: 30px;
-            background: #b45309; /* amber-700 */
-            position: absolute;
-            top: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        .lantern-tassel {
-            width: 4px;
-            height: 20px;
-            background: #ef4444;
-            position: absolute;
-            bottom: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        /* --- 礼花 Canvas --- */
-        #confetti-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 50;
-        }
-
-        /* --- 呼吸光晕效果 --- */
-        @keyframes glow {
-            0%, 100% { box-shadow: 0 0 10px rgba(220, 38, 38, 0.2); }
-            50% { box-shadow: 0 0 25px rgba(220, 38, 38, 0.6); }
-        }
-        .glow-effect {
-            animation: glow 3s infinite;
-        }
+        /* Lantern & Glow Effects */
+        .lantern-container { position: absolute; top: -10px; z-index: 10; display: flex; justify-content: space-between; width: 100%; pointer-events: none; overflow: hidden; padding: 0 20px; }
+        .lantern { width: 60px; height: 50px; background: #dc2626; border-radius: 15px; position: relative; animation: swing 4s infinite ease-in-out; box-shadow: 0 5px 15px rgba(220, 38, 38, 0.4); }
+        .lantern::before, .lantern::after { content: ''; position: absolute; left: 50%; transform: translateX(-50%); width: 30px; height: 6px; background: #fcd34d; border-radius: 2px; }
+        .lantern::before { top: -4px; } .lantern::after { bottom: -4px; }
+        .lantern-tassel { width: 4px; height: 20px; background: #ef4444; position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); }
+        .lantern-string { width: 2px; height: 30px; background: #b45309; position: absolute; top: -30px; left: 50%; transform: translateX(-50%); }
+        @keyframes swing { 0% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } 100% { transform: rotate(-5deg); } }
+        .glow-effect { animation: glow 3s infinite; }
+        @keyframes glow { 0%, 100% { box-shadow: 0 0 10px rgba(220, 38, 38, 0.2); } 50% { box-shadow: 0 0 25px rgba(220, 38, 38, 0.6); } }
+        
+        /* Confetti Canvas */
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
     </style>
-    <!-- Chosen Palette: Festive Red & Gold (Red-600/Amber-400/Stone-50) -->
-    <!-- Application Structure Plan:
-         1. Festive Header: Lanterns + Greetings + Confetti Trigger.
-         2. Hero Countdown: Red cards with Gold text, resembling "Red Envelopes" (Ang Pao).
-         3. Progress Viz: Donut chart showing 2025 completion, framing the arrival of 2026.
-         4. Wishes/Resolutions: A "Wish Scroll" styling for user inputs.
-    -->
-    <!-- Visualization & Content Choices:
-         1. Confetti -> Goal: Celebration -> HTML5 Canvas Particle System -> Triggered on load/click -> Vanilla JS class.
-         2. Countdown -> Goal: Anticipation -> JS Date Object -> Updates DOM -> Styled as traditional Couplets.
-         3. Chart -> Goal: Context -> Chart.js Donut -> Red (Passed) vs Gold (Future).
-         CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
-    -->
 </head>
 <body class="bg-red-50 text-stone-800 font-sans min-h-screen flex flex-col overflow-x-hidden relative">
 
-    <!-- Confetti Canvas -->
     <canvas id="confetti-canvas"></canvas>
 
-    <!-- Decorative Lanterns (Top) -->
+    <!-- UI Decor -->
     <div class="lantern-container max-w-5xl mx-auto left-0 right-0">
-        <div style="position:relative; left: 5%;">
-            <div class="lantern-string"></div>
-            <div class="lantern"><div class="lantern-tassel"></div></div>
-        </div>
-        <div style="position:relative; right: 5%; animation-delay: 1s;">
-            <div class="lantern-string"></div>
-            <div class="lantern"><div class="lantern-tassel"></div></div>
-        </div>
+        <div style="position:relative; left: 5%;"> <div class="lantern-string"></div> <div class="lantern"><div class="lantern-tassel"></div></div> </div>
+        <div style="position:relative; right: 5%; animation-delay: 1s;"> <div class="lantern-string"></div> <div class="lantern"><div class="lantern-tassel"></div></div> </div>
     </div>
 
-    <!-- Header Section -->
+    <!-- Header -->
     <header class="w-full bg-gradient-to-b from-red-700 to-red-600 shadow-lg border-b-4 border-amber-400 py-10 relative overflow-hidden">
-        <!-- Subtle background pattern using CSS radial gradients -->
         <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#fbbf24 1px, transparent 1px); background-size: 20px 20px;"></div>
-        
-        <div class="container mx-auto px-4 text-center relative z-10 cursor-pointer" onclick="fireConfetti()">
+        <div class="container mx-auto px-4 text-center relative z-10 cursor-pointer" onclick="window.fireConfetti()">
             <div class="inline-block bg-red-800 text-amber-300 text-xs px-3 py-1 rounded-full mb-3 border border-amber-500 uppercase tracking-wider">
-                Goodbye 2025, Hello 2026
+                Full Stack: Worker + KV
             </div>
             <h1 class="text-4xl md:text-5xl font-bold text-white tracking-wide font-festive drop-shadow-md">
                 喜迎 <span class="text-amber-300 text-5xl md:text-6xl">2026</span> 元旦
@@ -154,354 +61,293 @@
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="flex-grow container mx-auto px-4 py-8 md:py-12 space-y-12 max-w-5xl relative z-20">
-
-        <!-- SECTION 1: The Festive Countdown -->
+        <!-- Countdown View -->
         <section class="bg-white rounded-3xl shadow-xl p-6 md:p-10 border-2 border-red-100 glow-effect">
             <div class="text-center mb-10">
                 <h2 class="text-xl font-bold text-red-700 font-festive text-2xl mb-2">距离 2026 年 1 月 1 日 还有</h2>
                 <div class="w-24 h-1 bg-gradient-to-r from-transparent via-red-400 to-transparent mx-auto"></div>
             </div>
-
             <div id="countdown-display" class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-4xl mx-auto">
-                <!-- Box Style: Resembling Red Envelopes/Cards -->
-                <!-- Days -->
-                <div class="bg-red-600 rounded-2xl p-4 flex flex-col items-center justify-center shadow-lg border-b-8 border-red-800 transform hover:-translate-y-1 transition-transform duration-300">
-                    <span id="days" class="text-4xl md:text-6xl font-bold text-amber-100 tabular-nums drop-shadow-sm">000</span>
-                    <span class="text-xs md:text-sm font-bold text-red-200 uppercase mt-2 tracking-widest">天 (Days)</span>
-                </div>
-                <!-- Hours -->
-                <div class="bg-red-600 rounded-2xl p-4 flex flex-col items-center justify-center shadow-lg border-b-8 border-red-800 transform hover:-translate-y-1 transition-transform duration-300">
-                    <span id="hours" class="text-4xl md:text-6xl font-bold text-amber-100 tabular-nums drop-shadow-sm">00</span>
-                    <span class="text-xs md:text-sm font-bold text-red-200 uppercase mt-2 tracking-widest">时 (Hours)</span>
-                </div>
-                <!-- Minutes -->
-                <div class="bg-red-600 rounded-2xl p-4 flex flex-col items-center justify-center shadow-lg border-b-8 border-red-800 transform hover:-translate-y-1 transition-transform duration-300">
-                    <span id="minutes" class="text-4xl md:text-6xl font-bold text-amber-100 tabular-nums drop-shadow-sm">00</span>
-                    <span class="text-xs md:text-sm font-bold text-red-200 uppercase mt-2 tracking-widest">分 (Mins)</span>
-                </div>
-                <!-- Seconds -->
-                <div class="bg-amber-400 rounded-2xl p-4 flex flex-col items-center justify-center shadow-lg border-b-8 border-amber-600 transform hover:-translate-y-1 transition-transform duration-300">
-                    <span id="seconds" class="text-4xl md:text-6xl font-bold text-red-700 tabular-nums drop-shadow-sm">00</span>
-                    <span class="text-xs md:text-sm font-bold text-red-800 uppercase mt-2 tracking-widest">秒 (Secs)</span>
-                </div>
+                <div class="bg-red-600 rounded-2xl p-4 flex flex-col items-center justify-center shadow-lg border-b-8 border-red-800 transform hover:-translate-y-1 transition-transform duration-300"><span id="days" class="text-4xl md:text-6xl font-bold text-amber-100 tabular-nums">000</span><span class="text-xs md:text-sm font-bold text-red-200 uppercase mt-2 tracking-widest">天 (Days)</span></div>
+                <div class="bg-red-600 rounded-2xl p-4 flex flex-col items-center justify-center shadow-lg border-b-8 border-red-800 transform hover:-translate-y-1 transition-transform duration-300"><span id="hours" class="text-4xl md:text-6xl font-bold text-amber-100 tabular-nums">00</span><span class="text-xs md:text-sm font-bold text-red-200 uppercase mt-2 tracking-widest">时 (Hours)</span></div>
+                <div class="bg-red-600 rounded-2xl p-4 flex flex-col items-center justify-center shadow-lg border-b-8 border-red-800 transform hover:-translate-y-1 transition-transform duration-300"><span id="minutes" class="text-4xl md:text-6xl font-bold text-amber-100 tabular-nums">00</span><span class="text-xs md:text-sm font-bold text-red-200 uppercase mt-2 tracking-widest">分 (Mins)</span></div>
+                <div class="bg-amber-400 rounded-2xl p-4 flex flex-col items-center justify-center shadow-lg border-b-8 border-amber-600 transform hover:-translate-y-1 transition-transform duration-300"><span id="seconds" class="text-4xl md:text-6xl font-bold text-red-700 tabular-nums">00</span><span class="text-xs md:text-sm font-bold text-red-800 uppercase mt-2 tracking-widest">秒 (Secs)</span></div>
             </div>
-            
-            <div id="countdown-message" class="hidden text-center mt-8 p-6 bg-red-100 text-red-800 rounded-xl font-bold text-2xl border-2 border-red-300">
-                🎉 新年快乐！Happy New Year 2026! 🎊
-            </div>
+            <div id="countdown-message" class="hidden text-center mt-8 p-6 bg-red-100 text-red-800 rounded-xl font-bold text-2xl border-2 border-red-300">🎉 新年快乐！Happy New Year 2026! 🎊</div>
         </section>
 
-        <!-- SECTION 2: Analytics & Wishes -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
-            <!-- Visualization: 2025 Summary -->
+            <!-- Analytics View -->
             <section class="bg-white rounded-3xl shadow-lg p-6 border border-red-50 flex flex-col">
                 <div class="mb-4 pl-2 border-l-4 border-red-500">
-                    <h3 class="text-lg font-bold text-stone-800">
-                        2025 时光印记
-                    </h3>
-                    <p class="text-sm text-stone-500 mt-1">
-                        岁末盘点：已逝去的时光与即将到来的新篇章。
-                    </p>
+                    <h3 class="text-lg font-bold text-stone-800">2025 时光印记</h3>
+                    <p class="text-sm text-stone-500 mt-1">数据可视化：已逝时光 vs 未来期许</p>
                 </div>
-
                 <div class="flex-grow flex items-center justify-center w-full py-4 relative">
-                    <!-- Decor element -->
-                    <div class="absolute text-6xl opacity-10 select-none top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">🕰️</div>
                     <div class="chart-container">
                         <canvas id="yearProgressChart"></canvas>
                     </div>
                 </div>
-
                 <div class="mt-4 text-center bg-red-50 rounded-lg p-3">
-                    <p id="progress-text" class="text-stone-700 font-medium">
-                        加载中...
-                    </p>
+                    <p id="progress-text" class="text-stone-700 font-medium">加载中...</p>
                 </div>
             </section>
 
-            <!-- Interaction: New Year Wishes -->
+            <!-- Wishes View -->
             <section class="bg-white rounded-3xl shadow-lg p-6 border border-red-50 flex flex-col relative overflow-hidden">
-                <!-- Background decoration -->
                 <div class="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-red-100 rounded-full opacity-50 z-0"></div>
-
-                <div class="mb-4 pl-2 border-l-4 border-amber-500 relative z-10">
-                    <h3 class="text-lg font-bold text-stone-800">
-                        2026 许愿红笺
-                    </h3>
-                    <p class="text-sm text-stone-500 mt-1">
-                        写下你的新年愿望，让它们在 2026 开花结果。
-                    </p>
+                <div class="mb-4 pl-2 border-l-4 border-amber-500 relative z-10 flex justify-between items-start">
+                    <div>
+                        <h3 class="text-lg font-bold text-stone-800">2026 云端愿望单</h3>
+                        <p class="text-sm text-stone-500 mt-1">写下你的新年愿望，让它们在 2026 开花结果</p>
+                    </div>
+                    <div id="connection-status" class="flex items-center text-xs text-stone-400 bg-stone-100 px-2 py-1 rounded-md">
+                        <span class="spinner mr-1"></span> 连接后端...
+                    </div>
                 </div>
-
-                <div class="flex-grow bg-stone-50 rounded-xl p-4 mb-4 overflow-y-auto max-h-[300px] border border-stone-200 relative z-10" id="goal-list-container">
-                    <p class="text-stone-400 text-center italic mt-10" id="empty-state">
-                        🏮 空空如也。写下第一个新年愿望吧！
-                    </p>
-                    <ul id="goal-list" class="space-y-3">
-                        <!-- Wishes injected here -->
-                    </ul>
+                <div class="flex-grow bg-stone-50 rounded-xl p-4 mb-4 overflow-y-auto max-h-[300px] border border-stone-200 relative z-10" id="wishes-container">
+                    <!-- Wish items injected by View -->
                 </div>
-
                 <div class="flex gap-2 relative z-10">
-                    <input type="text" id="goal-input" placeholder="输入新年愿望 (例如: 身体健康)..." 
-                           class="flex-grow px-4 py-3 border border-red-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white shadow-sm">
-                    <button id="add-goal-btn" 
-                            class="px-6 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl hover:from-red-700 hover:to-red-600 transition-all font-bold shadow-md hover:shadow-lg transform active:scale-95">
-                        许愿
-                    </button>
+                    <input type="text" id="wish-input" placeholder="正在连接 API..." disabled class="flex-grow px-4 py-3 border border-red-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white shadow-sm disabled:bg-stone-100 disabled:cursor-not-allowed">
+                    <button id="add-wish-btn" disabled class="px-6 py-3 bg-stone-400 text-white rounded-xl font-bold shadow-md disabled:cursor-not-allowed transition-all">许愿</button>
                 </div>
             </section>
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="w-full bg-stone-100 border-t border-red-100 py-8 mt-8">
-        <div class="container mx-auto px-4 text-center">
-            <div class="flex justify-center space-x-4 mb-4 text-2xl">
-                <span>🧧</span><span>🍊</span><span>🧨</span>
-            </div>
-            <p class="text-stone-500 text-sm mb-2">&copy; 2025-2026 跨年倒计时. 祝您新年快乐，万事如意！</p>
-            <p class="text-stone-400 text-xs">
-                <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" class="hover:text-red-600 transition-colors">
-                    皖ICP备2025092209号
-                </a>
-            </p>
-        </div>
+    <footer class="w-full bg-stone-100 border-t border-red-100 py-8 mt-8 text-center text-sm text-stone-500">
+        <p>&copy; 2025-2026 跨年倒计时 | 架构：Frontend + Cloudflare Worker</p>
+        <p class="text-xs text-stone-400 mt-1"><a href="https://beian.miit.gov.cn/" target="_blank">皖ICP备2025092209号</a></p>
     </footer>
 
-    <!-- Logic Script -->
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        // ========================================================
+        // 1. 配置区域 (CONFIGURATION)
+        // ========================================================
+        
+        // 【重要】：部署 Worker 后，请将这里的 false 改为 false，并填入 URL
+        // 示例: "https://my-wish-worker.username.workers.dev/api/wishes"
+        const WORKER_API_URL = "https://2026.niuma.edu.kg/api/wishes"; 
+        
+        // 预览模式开关：为保证您现在能看到效果，默认开启模拟数据（因为还没部署 Worker）
+        // 如果您填入了上面的 URL，请将下面设为 false
+        const IS_MOCK_MODE = false; 
+
+        // ========================================================
+        // 2. API 服务层 (SERVICE LAYER)
+        // 负责与 Cloudflare Worker 通信
+        // ========================================================
+        class WishService {
+            constructor(apiUrl, isMock) {
+                this.apiUrl = apiUrl;
+                this.isMock = isMock;
+                // Mock data store
+                if(isMock) {
+                    console.log("⚠️ 运行在模拟模式 (Mock Mode). 数据存储在 LocalStorage.");
+                    this.mockStore = JSON.parse(localStorage.getItem('mock_wishes') || '[]');
+                }
+            }
+
+            async getAll() {
+                if (this.isMock) {
+                    await new Promise(r => setTimeout(r, 800)); // Simulate network lag
+                    return this.mockStore;
+                }
+                
+                try {
+                    const res = await fetch(this.apiUrl);
+                    if (!res.ok) throw new Error("API Error");
+                    return await res.json();
+                } catch (e) {
+                    console.error("Fetch failed", e);
+                    throw e;
+                }
+            }
+
+            async add(text) {
+                if (this.isMock) {
+                    await new Promise(r => setTimeout(r, 500));
+                    const newWish = { id: Date.now().toString(), text, timestamp: Date.now() };
+                    this.mockStore.unshift(newWish);
+                    localStorage.setItem('mock_wishes', JSON.stringify(this.mockStore));
+                    return newWish;
+                }
+
+                try {
+                    const res = await fetch(this.apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text })
+                    });
+                    if (!res.ok) throw new Error("Add failed");
+                    return await res.json();
+                } catch (e) {
+                    console.error("Add failed", e);
+                    throw e;
+                }
+            }
+
+            async delete(id) {
+                if (this.isMock) {
+                    this.mockStore = this.mockStore.filter(w => w.id !== id);
+                    localStorage.setItem('mock_wishes', JSON.stringify(this.mockStore));
+                    return true;
+                }
+
+                try {
+                    const res = await fetch(this.apiUrl, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id })
+                    });
+                    return res.ok;
+                } catch (e) {
+                    console.error("Delete failed", e);
+                    throw e;
+                }
+            }
+        }
+
+        // ========================================================
+        // 3. 页面逻辑 (CONTROLLER)
+        // ========================================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            const api = new WishService(WORKER_API_URL, IS_MOCK_MODE);
             
-            // --- STATE MANAGEMENT ---
-            const state = {
-                targetDate: new Date('January 1, 2026 00:00:00').getTime(),
-                goals: [],
-                yearStart: new Date('January 1, 2025 00:00:00').getTime(),
-                yearEnd: new Date('December 31, 2025 23:59:59').getTime()
-            };
-
-            // --- CANVAS CONFETTI SYSTEM ---
-            const canvas = document.getElementById('confetti-canvas');
-            const ctx = canvas.getContext('2d');
-            let particles = [];
-            let animationId;
-
-            function resizeCanvas() {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-            }
-            window.addEventListener('resize', resizeCanvas);
-            resizeCanvas();
-
-            class Particle {
-                constructor() {
-                    this.x = Math.random() * canvas.width;
-                    this.y = Math.random() * canvas.height - canvas.height;
-                    this.size = Math.random() * 8 + 4;
-                    this.speedY = Math.random() * 3 + 2;
-                    this.speedX = Math.random() * 2 - 1;
-                    // Festive Colors: Red, Gold, Orange, White
-                    const colors = ['#dc2626', '#fbbf24', '#f59e0b', '#ffffff', '#ef4444'];
-                    this.color = colors[Math.floor(Math.random() * colors.length)];
-                    this.rotation = Math.random() * 360;
-                    this.rotationSpeed = Math.random() * 5 - 2.5;
-                }
-                update() {
-                    this.y += this.speedY;
-                    this.x += this.speedX;
-                    this.rotation += this.rotationSpeed;
-                    if (this.y > canvas.height) {
-                        this.y = -20;
-                        this.x = Math.random() * canvas.width;
-                    }
-                }
-                draw() {
-                    ctx.save();
-                    ctx.translate(this.x, this.y);
-                    ctx.rotate(this.rotation * Math.PI / 180);
-                    ctx.fillStyle = this.color;
-                    ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
-                    ctx.restore();
-                }
-            }
-
-            function initConfetti() {
-                particles = [];
-                for (let i = 0; i < 100; i++) { // Number of particles
-                    particles.push(new Particle());
-                }
-            }
-
-            function animateConfetti() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                particles.forEach(p => {
-                    p.update();
-                    p.draw();
-                });
-                animationId = requestAnimationFrame(animateConfetti);
-            }
-
-            // Expose trigger to global scope for HTML onclick
-            window.fireConfetti = function() {
-                // If not running, start. If running, add more particles.
-                if (!animationId) {
-                    initConfetti();
-                    animateConfetti();
-                    // Stop after 5 seconds to save resources
-                    setTimeout(() => {
-                        cancelAnimationFrame(animationId);
-                        animationId = null;
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    }, 5000);
-                } else {
-                    // Add burst
-                    for (let i = 0; i < 50; i++) particles.push(new Particle());
-                }
-            };
-
-            // Trigger once on load for celebration
-            setTimeout(window.fireConfetti, 500);
-
-
-            // --- COUNTDOWN LOGIC ---
+            // UI References
             const els = {
+                status: document.getElementById('connection-status'),
+                input: document.getElementById('wish-input'),
+                btn: document.getElementById('add-wish-btn'),
+                list: document.getElementById('wishes-container'),
                 days: document.getElementById('days'),
                 hours: document.getElementById('hours'),
                 minutes: document.getElementById('minutes'),
                 seconds: document.getElementById('seconds'),
-                message: document.getElementById('countdown-message'),
-                display: document.getElementById('countdown-display')
             };
 
-            function updateCountdown() {
-                const now = new Date().getTime();
-                const distance = state.targetDate - now;
+            // --- Countdown Logic ---
+            const target = new Date('January 1, 2026 00:00:00').getTime();
+            setInterval(() => {
+                const now = Date.now();
+                const dist = target - now;
+                if (dist < 0) return;
+                els.days.innerText = Math.floor(dist / (1000 * 60 * 60 * 24)).toString().padStart(2, '0');
+                els.hours.innerText = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString().padStart(2, '0');
+                els.minutes.innerText = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+                els.seconds.innerText = Math.floor((dist % (1000 * 60)) / 1000).toString().padStart(2, '0');
+            }, 1000);
 
-                if (distance < 0) {
-                    els.display.classList.add('hidden');
-                    els.message.classList.remove('hidden');
-                    clearInterval(timerInterval);
-                    return;
-                }
-
-                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                els.days.innerText = days < 10 ? '0' + days : days;
-                els.hours.innerText = hours < 10 ? '0' + hours : hours;
-                els.minutes.innerText = minutes < 10 ? '0' + minutes : minutes;
-                els.seconds.innerText = seconds < 10 ? '0' + seconds : seconds;
-            }
-
-            const timerInterval = setInterval(updateCountdown, 1000);
-            updateCountdown(); 
-
-            // --- CHART VISUALIZATION LOGIC ---
-            function initChart() {
-                const now = new Date().getTime();
-                const totalDuration = state.yearEnd - state.yearStart;
-                let elapsed = now - state.yearStart;
-                
-                if (elapsed < 0) elapsed = 0;
-                if (elapsed > totalDuration) elapsed = totalDuration;
-
-                const percentElapsed = (elapsed / totalDuration) * 100;
-                const percentRemaining = 100 - percentElapsed;
-
-                document.getElementById('progress-text').innerHTML = 
-                    `2025 年已过去 <span class="font-bold text-red-600 text-lg">${percentElapsed.toFixed(2)}%</span>，<br>最后 <span class="font-bold text-amber-500">${percentRemaining.toFixed(2)}%</span> 加油冲刺！`;
-
-                const ctx = document.getElementById('yearProgressChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['已过去 (Passed)', '2026 倒计时 (Remaining)'],
-                        datasets: [{
-                            data: [percentElapsed, percentRemaining],
-                            backgroundColor: [
-                                '#ef4444', // red-500 (Festive Red)
-                                '#fbbf24'  // amber-400 (Gold)
-                            ],
-                            borderWidth: 2,
-                            borderColor: '#ffffff',
-                            hoverOffset: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '65%',
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    font: { family: "'PingFang SC', sans-serif" },
-                                    color: '#78350f', // amber-900
-                                    usePointStyle: true
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-            initChart();
-
-            // --- WISH LIST LOGIC ---
-            const goalInput = document.getElementById('goal-input');
-            const addBtn = document.getElementById('add-goal-btn');
-            const goalList = document.getElementById('goal-list');
-            const emptyState = document.getElementById('empty-state');
-
-            function renderGoals() {
-                goalList.innerHTML = '';
-                if (state.goals.length === 0) {
-                    emptyState.style.display = 'block';
-                } else {
-                    emptyState.style.display = 'none';
-                    state.goals.forEach((goal, index) => {
-                        const li = document.createElement('li');
-                        li.className = 'flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border-l-4 border-red-400 animate-[fadeIn_0.3s_ease-out]';
-                        li.innerHTML = `
-                            <div class="flex items-center">
-                                <span class="text-amber-500 mr-2">✨</span>
-                                <span class="text-stone-700 font-medium">${goal}</span>
-                            </div>
-                            <button class="text-stone-300 hover:text-red-500 transition-colors px-2" onclick="removeGoal(${index})">
-                                &times;
-                            </button>
-                        `;
-                        goalList.appendChild(li);
-                    });
-                }
-            }
-
-            window.removeGoal = function(index) {
-                state.goals.splice(index, 1);
-                renderGoals();
-            };
-
-            function addGoal() {
-                const val = goalInput.value.trim();
-                if (val) {
-                    state.goals.push(val);
-                    goalInput.value = '';
-                    renderGoals();
-                    // Small celebration confetti on adding a goal
-                    window.fireConfetti(); 
-                }
-            }
-
-            addBtn.addEventListener('click', addGoal);
-            goalInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') addGoal();
+            // --- Chart Logic ---
+            const start = new Date('January 1, 2025 00:00:00').getTime();
+            const end = new Date('December 31, 2025 23:59:59').getTime();
+            const now = Date.now();
+            const pct = Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100));
+            document.getElementById('progress-text').innerHTML = `2025 年已过去 <span class="font-bold text-red-600 text-lg">${pct.toFixed(2)}%</span>`;
+            
+            new Chart(document.getElementById('yearProgressChart').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['已过去', '剩余'],
+                    datasets: [{
+                        data: [pct, 100 - pct],
+                        backgroundColor: ['#ef4444', '#fbbf24'],
+                        borderWidth: 2, borderColor: '#ffffff', hoverOffset: 6
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true } } } }
             });
 
+            // --- Wish Logic (Backend Integration) ---
+            const renderList = (wishes) => {
+                els.list.innerHTML = '';
+                if (wishes.length === 0) {
+                    els.list.innerHTML = '<p class="text-stone-400 text-center italic mt-10">🏮 暂无愿望，快来许愿吧！</p>';
+                    return;
+                }
+                const ul = document.createElement('ul');
+                ul.className = "space-y-3";
+                wishes.forEach(w => {
+                    const li = document.createElement('li');
+                    li.className = 'flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border-l-4 border-red-400 animate-[fadeIn_0.3s_ease-out]';
+                    li.innerHTML = `
+                        <div class="flex items-center"><span class="text-amber-500 mr-2">✨</span><span class="text-stone-700 font-medium break-all">${w.text}</span></div>
+                        <button class="delete-btn text-stone-300 hover:text-red-500 px-2" data-id="${w.id}">&times;</button>
+                    `;
+                    ul.appendChild(li);
+                });
+                els.list.appendChild(ul);
+
+                // Bind delete
+                document.querySelectorAll('.delete-btn').forEach(b => {
+                    b.addEventListener('click', async (e) => {
+                        const id = e.target.getAttribute('data-id');
+                        e.target.innerText = "...";
+                        await api.delete(id);
+                        loadWishes();
+                    });
+                });
+            };
+
+            const loadWishes = async () => {
+                try {
+                    const data = await api.getAll();
+                    renderList(data);
+                    // Update UI State
+                    els.status.innerHTML = `<span class="text-green-600 font-bold">● ${IS_MOCK_MODE ? '模拟模式' : 'Worker 已连接'}</span>`;
+                    els.input.disabled = false;
+                    els.input.placeholder = "许下新年愿望...";
+                    els.btn.disabled = false;
+                    els.btn.className = "px-6 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl hover:from-red-700 hover:to-red-600 transition-all font-bold shadow-md hover:shadow-lg transform active:scale-95";
+                } catch (e) {
+                    els.status.innerHTML = `<span class="text-red-500">连接失败</span>`;
+                    console.error(e);
+                }
+            };
+
+            els.btn.addEventListener('click', async () => {
+                const val = els.input.value.trim();
+                if(!val) return;
+                els.input.value = '';
+                els.input.disabled = true; // prevent double submit
+                await api.add(val);
+                window.fireConfetti();
+                els.input.disabled = false;
+                els.input.focus();
+                loadWishes();
+            });
+
+            // Initial Load
+            loadWishes();
+
+            // --- Visual FX (Confetti) ---
+            const cvs = document.getElementById('confetti-canvas');
+            const ctx = cvs.getContext('2d');
+            let parts = [];
+            const resize = () => { cvs.width = window.innerWidth; cvs.height = window.innerHeight; };
+            window.addEventListener('resize', resize); resize();
+            window.fireConfetti = () => {
+                for(let i=0; i<60; i++) parts.push({
+                    x: Math.random()*cvs.width, y: Math.random()*cvs.height-cvs.height,
+                    c: ['#dc2626','#fbbf24','#f59e0b'][Math.floor(Math.random()*3)],
+                    s: Math.random()*8+4, dy: Math.random()*3+2, dx: Math.random()*2-1, r: Math.random()*360
+                });
+            };
+            const loop = () => {
+                ctx.clearRect(0,0,cvs.width,cvs.height);
+                parts.forEach((p,i) => {
+                    p.y+=p.dy; p.x+=p.dx; p.r+=5;
+                    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r*Math.PI/180);
+                    ctx.fillStyle=p.c; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s); ctx.restore();
+                    if(p.y>cvs.height) parts.splice(i,1);
+                });
+                requestAnimationFrame(loop);
+            };
+            loop();
+            setTimeout(window.fireConfetti, 500);
         });
     </script>
 </body>
